@@ -63,9 +63,9 @@ class InvestmentIn(BaseModel):
     date: date
 
     @validator("amount")
-    def amount_must_be_non_negative(cls, v):
-        if v < 0:
-            raise ValueError("The amount must be non-negative")
+    def amount_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError("The amount must be positive")
         return v
 
 
