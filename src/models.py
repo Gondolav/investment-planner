@@ -3,6 +3,10 @@ from typing import Dict, List
 from pydantic import BaseModel, validator
 
 
+class Message(BaseModel):
+    message: str
+
+
 class AssetIn(BaseModel):
     name: str
     apr: float

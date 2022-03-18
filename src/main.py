@@ -2,6 +2,7 @@ import pyfuncol
 from typing import List
 import databases
 from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -12,6 +13,7 @@ from .models import (
     BaseStrategy,
     Investment,
     InvestmentIn,
+    Message,
     Strategy,
     StrategyIn,
     User,
@@ -49,9 +51,19 @@ async def get_assets(skip: int = 0, take: int = 50):
     return [Asset.parse_obj(asset) for asset in assets]
 
 
-@app.get("/assets/{id}", response_model=Asset, status_code=status.HTTP_200_OK)
+@app.get(
+    "/assets/{id}",
+    response_model=Asset,
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
+)
 async def get_asset(id: int):
     asset = await crud.get_asset(database, id)
+    if not asset:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Asset not found"},
+        )
     return Asset.parse_obj(asset)
 
 
@@ -69,9 +81,20 @@ async def get_strategies(skip: int = 0, take: int = 50):
     return [BaseStrategy.parse_obj(strategy) for strategy in strategies]
 
 
-@app.get("/strategies/{id}", response_model=Strategy, status_code=status.HTTP_200_OK)
+@app.get(
+    "/strategies/{id}",
+    response_model=Strategy,
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
+)
 async def get_strategy(id: int):
     assets_per_strategy = await crud.get_strategy(database, id)
+    if not assets_per_strategy:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Strategy not found"},
+        )
+
     date = assets_per_strategy[0]["date"]
 
     allocation = {}
@@ -96,9 +119,20 @@ async def get_investments(skip: int = 0, take: int = 50):
     return [Investment.parse_obj(investment) for investment in investments]
 
 
-@app.get("/investments/{id}", response_model=Investment, status_code=status.HTTP_200_OK)
+@app.get(
+    "/investments/{id}",
+    response_model=Investment,
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
+)
 async def get_investment(id: int):
     investment = await crud.get_investment(database, id)
+    if not investment:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Investment not found"},
+        )
+
     return Investment.parse_obj(investment)
 
 
@@ -123,9 +157,20 @@ async def get_users(skip: int = 0, take: int = 50):
     ]
 
 
-@app.get("/users/{id}", response_model=User, status_code=status.HTTP_200_OK)
+@app.get(
+    "/users/{id}",
+    response_model=User,
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
+)
 async def get_user(id: int):
     investments_per_user = await crud.get_user(database, id)
+    if not investments_per_user:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "User not found"},
+        )
+
     mapping = [UserInvestmentMapping.parse_obj(u) for u in investments_per_user]
 
     investments = mapping.map(lambda m: m.investment_id)
