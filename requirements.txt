@@ -10,7 +10,6 @@ fastapi==0.75.0
 forbiddenfruit==0.1.4
 fsspec==2022.2.0
 greenlet==1.1.2
-gunicorn==20.1.0
 h11==0.13.0
 idna==3.3
 locket==0.2.1
