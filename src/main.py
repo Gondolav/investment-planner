@@ -8,9 +8,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 from . import crud
 from .models import (
     Asset,
+    AssetIn,
     BaseStrategy,
     Investment,
+    InvestmentIn,
     Strategy,
+    StrategyIn,
     User,
     UserInvestmentMapping,
 )
@@ -52,6 +55,12 @@ async def get_asset(id: int):
     return Asset.parse_obj(asset)
 
 
+@app.post("/assets", status_code=status.HTTP_201_CREATED)
+async def create_asset(asset: AssetIn):
+    id = await crud.insert_asset(database, asset)
+    return id
+
+
 @app.get(
     "/strategies", response_model=List[BaseStrategy], status_code=status.HTTP_200_OK
 )
@@ -73,6 +82,12 @@ async def get_strategy(id: int):
     return strategy
 
 
+@app.post("/strategies", status_code=status.HTTP_201_CREATED)
+async def create_strategy(strategy: StrategyIn):
+    id = await crud.insert_strategy(database, strategy)
+    return id
+
+
 @app.get(
     "/investments", response_model=List[Investment], status_code=status.HTTP_200_OK
 )
@@ -85,6 +100,12 @@ async def get_investments(skip: int = 0, take: int = 50):
 async def get_investment(id: int):
     investment = await crud.get_investment(database, id)
     return Investment.parse_obj(investment)
+
+
+@app.post("/investments", status_code=status.HTTP_201_CREATED)
+async def create_investment(investment: InvestmentIn):
+    id = await crud.insert_investment(database, investment)
+    return id
 
 
 @app.get("/users", response_model=List[User], status_code=status.HTTP_200_OK)
