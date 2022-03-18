@@ -17,7 +17,7 @@ from .models import (
 from .config import DATABASE_URL
 
 
-database = databases.Database(DATABASE_URL)
+database = databases.Database(DATABASE_URL, min_size=1, max_size=5)
 
 app = FastAPI(title="Investment planner")
 app.add_middleware(
