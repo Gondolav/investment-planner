@@ -25,9 +25,15 @@ from .config import DATABASE_URL
 database = databases.Database(DATABASE_URL, min_size=1, max_size=5)
 
 app = FastAPI(title="Investment planner")
+
+origins = [
+    "https://investment-planner.onrender.com",
+    "http://localhost",
+    "http://localhost:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
