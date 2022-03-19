@@ -48,7 +48,14 @@ users = sqlalchemy.Table(
     "User",
     metadata,
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, index=True),
-    sqlalchemy.Column("user_id", sqlalchemy.Integer, index=True),
+    sqlalchemy.Column("username", sqlalchemy.String, index=True),
+)
+
+investments_per_user = sqlalchemy.Table(
+    "InvestmentsUser",
+    metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, index=True),
+    sqlalchemy.Column("user_id", sqlalchemy.Integer, sqlalchemy.ForeignKey("User.id")),
     sqlalchemy.Column(
         "investment_id", sqlalchemy.Integer, sqlalchemy.ForeignKey("Investment.id")
     ),

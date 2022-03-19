@@ -11,12 +11,14 @@ from .models import (
     Asset,
     AssetIn,
     BaseStrategy,
+    BaseUser,
     Investment,
     InvestmentIn,
     Message,
     Strategy,
     StrategyIn,
     User,
+    UserIn,
     UserInvestmentMapping,
 )
 from .config import DATABASE_URL
@@ -73,7 +75,7 @@ async def get_asset(id: int):
     return Asset.parse_obj(asset)
 
 
-@app.post("/assets", status_code=status.HTTP_201_CREATED)
+@app.post("/assets", response_model=int, status_code=status.HTTP_201_CREATED)
 async def create_asset(asset: AssetIn):
     id = await crud.insert_asset(database, asset)
     return id
@@ -111,7 +113,7 @@ async def get_strategy(id: int):
     return strategy
 
 
-@app.post("/strategies", status_code=status.HTTP_201_CREATED)
+@app.post("/strategies", response_model=int, status_code=status.HTTP_201_CREATED)
 async def create_strategy(strategy: StrategyIn):
     id = await crud.insert_strategy(database, strategy)
     return id
@@ -142,25 +144,16 @@ async def get_investment(id: int):
     return Investment.parse_obj(investment)
 
 
-@app.post("/investments", status_code=status.HTTP_201_CREATED)
-async def create_investment(investment: InvestmentIn):
-    id = await crud.insert_investment(database, investment)
+@app.post("/investments", response_model=int, status_code=status.HTTP_201_CREATED)
+async def create_investment(investment: InvestmentIn, user_id: int):
+    id = await crud.insert_investment(database, investment, user_id)
     return id
 
 
-@app.get("/users", response_model=List[User], status_code=status.HTTP_200_OK)
+@app.get("/users", response_model=List[BaseUser], status_code=status.HTTP_200_OK)
 async def get_users(skip: int = 0, take: int = 50):
-    users_to_investments = await crud.get_users(database, skip, take)
-    users_to_investments = [
-        UserInvestmentMapping.parse_obj(u) for u in users_to_investments
-    ]
-    us = users_to_investments.group_by(lambda x: x.user_id).map(
-        lambda kv: (kv[0], kv[1].map(lambda i: i.investment_id))
-    )
-    return [
-        User(id=user_id, investments_ids=investments)
-        for user_id, investments in us.items()
-    ]
+    users = await crud.get_users(database, skip, take)
+    return [BaseUser.parse_obj(user) for user in users]
 
 
 @app.get(
@@ -177,8 +170,15 @@ async def get_user(id: int):
             content={"message": "User not found"},
         )
 
-    mapping = [UserInvestmentMapping.parse_obj(u) for u in investments_per_user]
+    username = investments_per_user[0]["username"]
 
-    investments = mapping.map(lambda m: m.investment_id)
+    investments = [i["investment_id"] for i in investments_per_user]
+    investments = [] if not all(investments) else investments
 
-    return User(id=id, investments_ids=investments)
+    return User(id=id, name=username, investments_ids=investments)
+
+
+@app.post("/users", response_model=int, status_code=status.HTTP_201_CREATED)
+async def create_user(user: UserIn):
+    id = await crud.insert_user(database, user)
+    return id

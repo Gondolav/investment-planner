@@ -1,4 +1,5 @@
 from datetime import date
+from re import L
 from typing import Dict, List
 from pydantic import BaseModel, validator
 
@@ -83,6 +84,13 @@ class UserInvestmentMapping(BaseModel):
     investment_id: int
 
 
-class User(BaseModel):
+class UserIn(BaseModel):
+    name: str
+
+
+class BaseUser(UserIn):
     id: int
+
+
+class User(BaseUser):
     investments_ids: List[int]

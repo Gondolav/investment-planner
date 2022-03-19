@@ -1,9 +1,16 @@
 from databases import Database
 from sqlalchemy import select
 
-from .models import AssetIn, InvestmentIn, StrategyIn
+from .models import AssetIn, InvestmentIn, StrategyIn, UserIn
 
-from .db import assets, assets_per_strategy, strategies, investments, users
+from .db import (
+    assets,
+    assets_per_strategy,
+    strategies,
+    investments,
+    users,
+    investments_per_user,
+)
 
 
 def get_assets(db: Database, skip: int = 0, take: int = 50):
@@ -62,13 +69,21 @@ def get_investment(db: Database, id: int):
     return db.fetch_one(query)
 
 
-def insert_investment(db: Database, investment: InvestmentIn):
-    query = investments.insert().values(
-        amount=investment.amount,
-        strategy_id=investment.strategy_id,
-        date=investment.date,
-    )
-    return db.execute(query)
+async def insert_investment(db: Database, investment: InvestmentIn, user_id: int):
+    async with db.transaction():
+        query = investments.insert().values(
+            amount=investment.amount,
+            strategy_id=investment.strategy_id,
+            date=investment.date,
+        )
+        investment_id = await db.execute(query)
+
+        query = investments_per_user.insert().values(
+            user_id=user_id, investment_id=investment_id
+        )
+        await db.execute(query)
+
+        return investment_id
 
 
 def get_users(db: Database, skip: int = 0, take: int = 50):
@@ -76,6 +91,21 @@ def get_users(db: Database, skip: int = 0, take: int = 50):
     return db.fetch_all(query)
 
 
-def get_user(db: Database, id: int):
-    query = users.select().where(users.c.id == id)
-    return db.fetch_all(query)
+async def get_user(db: Database, id: int):
+    query = select(users.c.username, investments_per_user.c.investment_id,).select_from(
+        users.join(investments_per_user, investments_per_user.c.user_id == id)
+    )
+
+    investments = await db.fetch_all(query)
+
+    if not investments:
+        query = users.select().where(users.c.id == id)
+        user = await db.fetch_one(query)
+        return [{"username": user["username"], "investment_id": None}]
+    else:
+        return investments
+
+
+def insert_user(db: Database, user: UserIn):
+    query = users.insert().values(username=user.name)
+    return db.execute(query)
