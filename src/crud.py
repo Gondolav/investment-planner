@@ -1,7 +1,7 @@
 from databases import Database
 from sqlalchemy import select
 
-from .models import AssetIn, InvestmentIn, StrategyIn, UserIn
+from .models import AssetIn, InvestmentIn, LocationIn, StrategyIn, UserIn
 
 from .db import (
     assets,
@@ -10,7 +10,23 @@ from .db import (
     investments,
     users,
     investments_per_user,
+    locations,
 )
+
+
+def get_locations(db: Database, skip: int = 0, take: int = 50):
+    query = locations.select().offset(skip).limit(take)
+    return db.fetch_all(query)
+
+
+def get_location(db: Database, id: int):
+    query = locations.select().where(locations.c.id == id)
+    return db.fetch_one(query)
+
+
+def insert_location(db: Database, location: LocationIn):
+    query = locations.insert().values(name=location.name)
+    return db.execute(query)
 
 
 def get_assets(db: Database, skip: int = 0, take: int = 50):
@@ -24,7 +40,9 @@ def get_asset(db: Database, id: int):
 
 
 def insert_asset(db: Database, asset: AssetIn):
-    query = assets.insert().values(name=asset.name, apr=asset.apr, risk=asset.risk)
+    query = assets.insert().values(
+        name=asset.name, apr=asset.apr, risk=asset.risk, location_id=asset.location_id
+    )
     return db.execute(query)
 
 

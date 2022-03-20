@@ -4,6 +4,13 @@ from .config import DATABASE_URL
 
 metadata = sqlalchemy.MetaData()
 
+locations = sqlalchemy.Table(
+    "Location",
+    metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True, index=True),
+    sqlalchemy.Column("name", sqlalchemy.String, index=True),
+)
+
 assets = sqlalchemy.Table(
     "Asset",
     metadata,
@@ -11,6 +18,9 @@ assets = sqlalchemy.Table(
     sqlalchemy.Column("name", sqlalchemy.String, index=True),
     sqlalchemy.Column("apr", sqlalchemy.Float),
     sqlalchemy.Column("risk", sqlalchemy.Integer),
+    sqlalchemy.Column(
+        "location_id", sqlalchemy.Integer, sqlalchemy.ForeignKey("Location.id")
+    ),
 )
 
 strategies = sqlalchemy.Table(

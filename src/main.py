@@ -14,12 +14,13 @@ from .models import (
     BaseUser,
     Investment,
     InvestmentIn,
+    Location,
+    LocationIn,
     Message,
     Strategy,
     StrategyIn,
     User,
     UserIn,
-    UserInvestmentMapping,
 )
 from .config import DATABASE_URL
 
@@ -51,6 +52,34 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
+
+@app.get("/locations", response_model=List[Location], status_code=status.HTTP_200_OK)
+async def get_locations(skip: int = 0, take: int = 50):
+    locations = await crud.get_locations(database, skip, take)
+    return [Location.parse_obj(location) for location in locations]
+
+
+@app.get(
+    "/locations/{id}",
+    response_model=Location,
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
+)
+async def get_location(id: int):
+    location = await crud.get_location(database, id)
+    if not location:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Location not found"},
+        )
+    return Location.parse_obj(location)
+
+
+@app.post("/locations", response_model=int, status_code=status.HTTP_201_CREATED)
+async def create_location(location: LocationIn):
+    id = await crud.insert_location(database, location)
+    return id
 
 
 @app.get("/assets", response_model=List[Asset], status_code=status.HTTP_200_OK)

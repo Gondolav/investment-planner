@@ -1,5 +1,4 @@
 from datetime import date
-from re import L
 from typing import Dict, List
 from pydantic import BaseModel, validator
 
@@ -8,10 +7,19 @@ class Message(BaseModel):
     message: str
 
 
+class LocationIn(BaseModel):
+    name: str
+
+
+class Location(LocationIn):
+    id: int
+
+
 class AssetIn(BaseModel):
     name: str
     apr: float
     risk: int
+    location_id: int
 
     @validator("apr")
     def apr_must_be_in_range(cls, v):
@@ -76,12 +84,6 @@ class InvestmentIn(BaseModel):
 
 class Investment(InvestmentIn):
     id: int
-
-
-class UserInvestmentMapping(BaseModel):
-    id: int
-    user_id: int
-    investment_id: int
 
 
 class UserIn(BaseModel):
